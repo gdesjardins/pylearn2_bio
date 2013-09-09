@@ -55,6 +55,9 @@ class Preprocessor(object):
         in the dataset.
     """
 
+    def __init__(self, skip=False):
+        self.skip = skip
+
     def apply(self, dataset, can_fit=False):
         """
             dataset: The dataset to act on.
@@ -504,8 +507,9 @@ class RemoveMean(ExamplewisePreprocessor):
 
 
 class Standardize(ExamplewisePreprocessor):
+
     """Subtracts the mean and divides by the standard deviation."""
-    def __init__(self, global_mean=False, global_std=False, std_eps=1e-4):
+    def __init__(self, global_mean=False, global_std=False, std_eps=1e-4, skip=False):
         """
         Initialize a Standardize preprocessor.
 
@@ -526,6 +530,7 @@ class Standardize(ExamplewisePreprocessor):
             from causing the feature values to blow up too much.
             Default is `1e-4`.
         """
+        super(Standardize, self).__init__(skip=skip)
         self._global_mean = global_mean
         self._global_std = global_std
         self._std_eps = std_eps
@@ -533,6 +538,9 @@ class Standardize(ExamplewisePreprocessor):
         self._std = None
 
     def apply(self, dataset, can_fit=False):
+        if self.skip:
+            return
+
         X = dataset.get_design_matrix()
         if can_fit:
             self._mean = X.mean() if self._global_mean else X.mean(axis=0)
@@ -748,7 +756,7 @@ class GlobalContrastNormalization(Preprocessor):
     def __init__(self, subtract_mean=True,
                  scale=1., sqrt_bias=None, use_std=None, min_divisor=1e-8,
                  std_bias=None, use_norm=None,
-                 batch_size=None):
+                 batch_size=None, skip=False):
         """
         See the docstring for `global_contrast_normalize` in
         `pylearn2.expr.preprocessing`.
@@ -769,6 +777,7 @@ class GlobalContrastNormalization(Preprocessor):
         The defaults aren't specified as part of the method signature so that we can tell
         whether the client is using each name for each option.
         """
+        super(GlobalContrastNormalization, self).__init__(skip=skip)
 
         if std_bias is not None:
             warnings.warn("std_bias is deprecated, and may be removed after October 12, 2013. Switch to sqrt_bias.", stacklevel=2)
@@ -809,6 +818,9 @@ class GlobalContrastNormalization(Preprocessor):
         self._batch_size = batch_size
 
     def apply(self, dataset, can_fit=False):
+        if self.skip:
+            return
+
         if self._batch_size is None:
             X = global_contrast_normalize(dataset.get_design_matrix(),
                                           scale=self._scale,
