@@ -395,9 +395,18 @@ class ContractiveAutoencoder(Autoencoder):
     A contracting autoencoder works like a regular autoencoder, and adds an
     extra term to its cost function.
     """
-    @functools.wraps(Autoencoder.__init__)
-    def __init__(self, *args, **kwargs):
-        super(ContractiveAutoencoder, self).__init__(*args, **kwargs)
+    def __init__(self, nvis, nhid, act_enc, act_dec,
+                 tied_weights=False, irange=1e-3, rng=9001):
+ 
+        super(ContractiveAutoencoder, self).__init__(
+            nvis=nvis,
+            nhid=nhid,
+            act_enc=act_enc,
+            act_dec=act_dec,
+            tied_weights=tied_weights,
+            irange=irange,
+            rng=rng
+        )
         dummyinput = tensor.matrix()
         if not is_pure_elemwise(self.act_enc(dummyinput), [dummyinput]):
             raise ValueError("Invalid encoder activation function: "
