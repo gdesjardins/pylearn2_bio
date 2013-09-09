@@ -138,3 +138,17 @@ class SampledMeanSquaredReconstructionError(MeanSquaredReconstructionError):
 #
 #    def get_data_specs(self, model):
 #        return (model.get_input_space(), model.get_input_source())
+
+
+class ContractionCost(Cost):
+
+    def expr(self, model, data, ** kwargs):
+        from pylearn2.models.autoencoder import ContractiveAutoencoder
+        assert isinstance(model, ContractiveAutoencoder)
+        self.get_data_specs(model)[0].validate(data)
+        return model.contraction_penalty(data)
+
+    def get_data_specs(self, model):
+        return (model.get_input_space(), model.get_input_source())
+
+
