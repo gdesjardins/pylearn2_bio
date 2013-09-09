@@ -36,7 +36,7 @@ class MonitorBased(TerminationCriterion):
     the model's monitor and checks to see if it has decreased by a
     certain proportion of the lowest value in the last N epochs.
     """
-    def __init__(self, prop_decrease = .01, N = 5, channel_name=None):
+    def __init__(self, prop_decrease = .01, N = 5, avg_coeff=1., channel_name=None):
         """
         Initialize a monitor-based termination criterion.
 
@@ -51,12 +51,18 @@ class MonitorBased(TerminationCriterion):
             Name of the channel to examine. If None and the monitor
             has only one channel, this channel will be used; otherwise, an
             error will be raised.
+        avg_coeff: float, optional
+            Moving average coefficient with which to filter the monitoring channel.
         """
         self._channel_name = channel_name
         self.prop_decrease = prop_decrease
         self.N = N
         self.countdown = N
         self.best_value = np.inf
+        assert avg_coeff > 0 and avg_coeff <= 1
+        self.target_avg_coeff = avg_coeff
+        self.avg_counter = 1.
+        self.avg = 0.
 
     def continue_learning(self, model):
         """
@@ -84,17 +90,28 @@ class MonitorBased(TerminationCriterion):
         else:
             v = monitor.channels[self._channel_name].val_record
 
+        # Smoothing the channel through a moving average.
+        avg_coeff = np.clip(1./self.avg_counter, self.target_avg_coeff, 1.0)
+        if avg_coeff > self.target_avg_coeff:
+            self.avg_counter += 1
+
+        self.avg = (1. - avg_coeff) * self.avg + avg_coeff * v[-1]
+        print 'Early-stopping: self.avg = ', self.avg
+
         # The countdown decreases every time the termination criterion is
         # called unless the channel value is lower than the best value times
         # the prop_decrease factor, in which case the countdown is reset to N
         # and the best value is updated
-        if v[- 1] < (1. - self.prop_decrease) * self.best_value:
+        if self.avg < (1. - self.prop_decrease) * self.best_value:
             self.countdown = self.N
         else:
             self.countdown = self.countdown - 1
 
-        if v[-1] < self.best_value:
-            self.best_value = v[-1]
+        if self.avg < self.best_value:
+            self.best_value = self.avg
+
+        # Signal that we can start computing moving averages.
+        self.avg_initialized = True
 
         # The optimization continues until the countdown has reached 0,
         # meaning that N epochs have passed without the model improving
