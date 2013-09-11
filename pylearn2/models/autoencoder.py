@@ -79,6 +79,7 @@ class Autoencoder(Block, Model):
         self.output_space = VectorSpace(nhid)
 
         # Save a few parameters needed for resizing
+        self.nvis = nvis
         self.nhid = nhid
         self.irange = irange
         self.tied_weights = tied_weights
