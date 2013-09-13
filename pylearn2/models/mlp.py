@@ -2255,6 +2255,20 @@ class PretrainedLayer(Layer):
     def fprop(self, state_below):
         return self.layer_content.upward_pass(state_below)
 
+    def get_weight_decay(self, coeff):
+        if isinstance(coeff, str):
+            coeff = float(coeff)
+        assert isinstance(coeff, float) or hasattr(coeff, 'dtype')
+        W = self.layer_content.get_weights()
+        return coeff * T.sqr(W).sum()
+
+    def get_l1_weight_decay(self, coeff):
+        if isinstance(coeff, str):
+            coeff = float(coeff)
+        assert isinstance(coeff, float) or hasattr(coeff, 'dtype')
+        W = self.layer_content.get_weights()
+        return coeff * abs(W).sum()
+
 
 
 class RBM_Layer(PretrainedLayer):
