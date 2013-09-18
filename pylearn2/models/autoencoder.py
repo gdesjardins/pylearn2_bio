@@ -329,6 +329,29 @@ class Autoencoder(Block, Model):
 
         return ['v', 'h']
 
+    def get_weight_decay(self, coeff):
+        if isinstance(coeff, str):
+            coeff = float(coeff)
+        assert isinstance(coeff, float) or hasattr(coeff, 'dtype')
+
+        penalty = coeff * tensor.sqr(self.weights).sum()
+        if not self.tied_weights:
+            penalty += coeff * tensor.sqr(self.w_prime).sum()
+
+        return penalty
+
+    def get_l1_weight_decay(self, coeff):
+        if isinstance(coeff, str):
+            coeff = float(coeff)
+        assert isinstance(coeff, float) or hasattr(coeff, 'dtype')
+
+        penalty = coeff * abs(self.weights).sum()
+        if not self.tied_weights:
+            penalty += coeff * abs(self.w_prime).sum()
+
+        return penalty
+
+
     # Use version defined in Model, rather than Block (which raises
     # NotImplementedError).
     get_input_space = Model.get_input_space

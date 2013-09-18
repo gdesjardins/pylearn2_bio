@@ -1,9 +1,12 @@
-from theano import tensor
-import theano.sparse
-import warnings
-from pylearn2.costs.cost import Cost
 import numpy.random
+import warnings
+
+import theano.sparse
+from theano import tensor
 from theano.tensor.shared_randomstreams import RandomStreams
+
+from pylearn2.costs.cost import Cost
+from pylearn2.space import NullSpace
 
 class MeanSquaredReconstructionError(Cost):
     def expr(self, model, data, ** kwargs):
@@ -144,11 +147,60 @@ class ContractionCost(Cost):
 
     def expr(self, model, data, ** kwargs):
         from pylearn2.models.autoencoder import ContractiveAutoencoder
-        assert isinstance(model, ContractiveAutoencoder)
         self.get_data_specs(model)[0].validate(data)
         return model.contraction_penalty(data)
 
     def get_data_specs(self, model):
         return (model.get_input_space(), model.get_input_source())
+
+
+class WeightDecay(Cost):
+    """
+    coeff * sum(sqr(weights))
+
+    for each set of weights.
+
+    """
+
+    def __init__(self, coeff):
+        """
+        coeff: L2 coefficient for the L2 penalty on the weight matrix.
+        """
+        self.coeff = coeff
+
+    def expr(self, model, data, ** kwargs):
+        self.get_data_specs(model)[0].validate(data)
+        l2_cost = model.get_weight_decay(self.coeff)
+        l2_cost.name ='ae_weight_decay'
+        return l2_cost
+
+    def get_data_specs(self, model):
+        # This cost does not use any data
+        return (NullSpace(), '')
+
+
+class L1WeightDecay(Cost):
+    """
+    coeff * sum(abs(weights))
+
+    for each set of weights.
+
+    """
+
+    def __init__(self, coeff):
+        """
+        coeff: L2 coefficient for the L2 penalty on the weight matrix.
+        """
+        self.coeff = coeff
+
+    def expr(self, model, data, ** kwargs):
+        self.get_data_specs(model)[0].validate(data)
+        l1_cost = model.get_l1_weight_decay(self.coeff)
+        l1_cost.name ='ae_l1_weight_decay'
+        return l1_cost
+
+    def get_data_specs(self, model):
+        # This cost does not use any data
+        return (NullSpace(), '')
 
 
