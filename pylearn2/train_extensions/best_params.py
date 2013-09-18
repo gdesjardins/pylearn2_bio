@@ -126,6 +126,7 @@ class MonitorBasedSaveBest(TrainExtension):
         new_cost = self.coeff * val_record[-1]
 
         if new_cost < self.best_cost:
+            self.best_epoch = model.monitor.get_epochs_seen()
             self.best_cost = new_cost
             serial.save(self.save_path, model, on_overwrite = 'backup')
 
