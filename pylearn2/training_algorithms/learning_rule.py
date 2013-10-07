@@ -1,5 +1,6 @@
 import numpy as np
 
+from theano import config
 from theano import tensor as T
 
 from theano.compat.python2x import OrderedDict
