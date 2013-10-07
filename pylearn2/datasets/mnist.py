@@ -22,7 +22,7 @@ class MNIST(dense_design_matrix.DenseDesignMatrix):
             fit_test_preprocessor = False):
 
         self.args = locals()
-
+        self.rng = np.random.RandomState([1,2,3])
 
         if which_set not in ['train','test']:
             if which_set == 'valid':
@@ -55,8 +55,11 @@ class MNIST(dense_design_matrix.DenseDesignMatrix):
             topo_view = read_mnist_images(im_path, dtype='float32')
             y = read_mnist_labels(label_path)
 
-            if binarize:
+            if binarize == 'threshold':
                 topo_view = ( topo_view > 0.5).astype('float32')
+            elif binarize == 'sample':
+                _topo_view = self.rng.random_sample(topo_view.shape) < topo_view
+                topo_view = _topo_view.astype('float32')
 
             self.one_hot = one_hot
             if one_hot:
@@ -82,9 +85,8 @@ class MNIST(dense_design_matrix.DenseDesignMatrix):
                 topo_view -= topo_view.mean(axis=0)
 
             if shuffle:
-                self.shuffle_rng = np.random.RandomState([1,2,3])
                 for i in xrange(topo_view.shape[0]):
-                    j = self.shuffle_rng.randint(m)
+                    j = self.rng.randint(m)
                     # Copy ensures that memory is not aliased.
                     tmp = topo_view[i,:,:,:].copy()
                     topo_view[i,:,:,:] = topo_view[j,:,:,:]
