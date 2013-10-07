@@ -97,6 +97,11 @@ class SequentialSubsetIterator(SubsetIterator):
         self._idx = 0
         self._batch = 0
 
+    def reset(self):
+        self._next_batch_no = 0
+        self._idx = 0
+        self._batch = 0
+
     def next(self):
         if self._batch >= self.num_batches or self._idx >= self._dataset_size:
             raise StopIteration()
